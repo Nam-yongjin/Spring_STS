@@ -151,7 +151,7 @@
 			<systemPath>${basedir}/src/main/webapp/WEB-INF/lib/ojdbc6.jar</systemPath>
 		</dependency>
 
-<!-- 추가 라이브러리 >> 우클릭후 MAVEN > Update Project-->
+<!-- 추가 라이브러리 >> 우클릭후 MAVEN > Update Project 해야함-->
 		<dependency>
 			<groupId>commons-beanutils</groupId>
 			<artifactId>commons-beanutils</artifactId>
