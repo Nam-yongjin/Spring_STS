@@ -1,11 +1,13 @@
 package com.myspring.pro27.member.controller;
 
+
 import java.util.List;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.EnableAspectJAutoProxy;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -17,17 +19,23 @@ import com.myspring.pro27.member.service.MemberService;
 import com.myspring.pro27.member.vo.MemberVO;
 
 @Controller("memberController")
+@EnableAspectJAutoProxy
 public class MemberControllerImpl implements MemberController {
+//	private static final Logger logger = LoggerFactory.getLogger(MemberControllerImpl.class);
+	
 	@Autowired
 	private MemberService memberService;
 
 	@Autowired
 	private MemberVO memberVO;
 
+
 	@Override
 	@RequestMapping(value="/member/listMembers.do" ,method = RequestMethod.GET)
 	public ModelAndView listMembers(HttpServletRequest request, HttpServletResponse response) throws Exception {
 		String viewName = getViewName(request);
+//		logger.info("viewName: "+ viewName);
+//		logger.debug("viewName: "+ viewName);
 		List membersList = memberService.listMembers();
 		ModelAndView mav = new ModelAndView(viewName);
 		mav.addObject("membersList", membersList);
