@@ -37,7 +37,9 @@ public class MemberControllerImpl implements MemberController {
 	@Override
 	@RequestMapping(value="/member/listMembers.do" ,method = RequestMethod.GET)
 	public ModelAndView listMembers(HttpServletRequest request, HttpServletResponse response) throws Exception {
-		String viewName = getViewName(request);
+		// 인터셉터에서 바인딩된 뷰이름 가져옴
+		String viewName = (String)request.getAttribute("viewName");
+		//String viewName = getViewName(request);
 		logger.debug("viewName: "+ viewName);
 		List membersList = memberService.listMembers();
 		ModelAndView mav = new ModelAndView(viewName);
@@ -70,7 +72,8 @@ public class MemberControllerImpl implements MemberController {
 	private ModelAndView form(@RequestParam(value= "result", required=false) String result,
 					       HttpServletRequest request, 
 					       HttpServletResponse response) throws Exception {
-		String viewName = getViewName(request);
+//		String viewName = getViewName(request);
+		String viewName = (String)request.getAttribute("viewName");
 		ModelAndView mav = new ModelAndView();
 		mav.addObject("result",result);
 		mav.setViewName(viewName);

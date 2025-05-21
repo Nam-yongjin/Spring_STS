@@ -1,4 +1,4 @@
-package com.myspring.pro28.ex03;
+package com.myspring.pro28.ex04;
 
 import javax.mail.internet.MimeMessage;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,7 +25,7 @@ public class MailService {
 			messageHelper.setFrom("oj944242@naver.com", "홍길동");
 			messageHelper.setSubject(subject);
 			messageHelper.setTo(to);
-			messageHelper.setText(body);
+			messageHelper.setText(body, true);
 			mailSender.send(message);
 		} catch (Exception e) {
 			e.printStackTrace();
