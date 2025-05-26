@@ -69,16 +69,6 @@ public class MemberControllerImpl implements MemberController {
 		return mav;
 	}
 
-	@RequestMapping(value = "/member/*Form.do", method = RequestMethod.GET)
-	private ModelAndView form(@RequestParam(value = "result", required = false) String result,
-			HttpServletRequest request, HttpServletResponse response) throws Exception {
-		String viewName = (String) request.getAttribute("viewName");
-		ModelAndView mav = new ModelAndView();
-		mav.addObject("result", result);
-		mav.setViewName(viewName);
-		return mav;
-	}
-
 	@Override
 	@RequestMapping(value = "/member/modMember.do", method = RequestMethod.GET)
 	public ModelAndView modMember(@RequestParam("id") String id, HttpServletRequest request,
@@ -111,7 +101,14 @@ public class MemberControllerImpl implements MemberController {
 			HttpSession session = request.getSession();
 			session.setAttribute("member", memberVO);
 			session.setAttribute("isLogOn", true);
-			mav.setViewName("redirect:/member/listMembers.do");
+			String action = (String)session.getAttribute("action");
+			session.removeAttribute("action");
+			if(action != null) {
+				// 로그인창을 직접들어간게 아닌 다른곳에서 로그인이필요해 로그인창이 뜬경우 그 경로를 action에 받아옴
+				mav.setViewName("redirect:"+action);	
+			}else {
+				mav.setViewName("redirect:/member/listMembers.do");
+			}
 		} else {
 			rAttr.addAttribute("result", "loginFailed");
 			mav.setViewName("redirect:/member/loginForm.do");
@@ -131,4 +128,16 @@ public class MemberControllerImpl implements MemberController {
 	}
 
 
+	@RequestMapping(value = "/member/*Form.do", method = RequestMethod.GET)
+	private ModelAndView form(@RequestParam(value = "result", required = false) String result,
+								@RequestParam(value = "action", required = false) String action,
+			HttpServletRequest request, HttpServletResponse response) throws Exception {
+		String viewName = (String) request.getAttribute("viewName");
+		HttpSession session = request.getSession();
+		session.setAttribute("action", action);
+		ModelAndView mav = new ModelAndView();
+		mav.addObject("result", result);
+		mav.setViewName(viewName);
+		return mav;
+	}
 }

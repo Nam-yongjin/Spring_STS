@@ -29,6 +29,19 @@
 	font-size: 30px;
 }
 </style>
+
+<!-- 로그인시 바로 글쓰기창, 비로그인시 member의 로그인창으로 이동 -->
+<script>
+	function fn_articleForm(isLogOn, articleForm, loginForm) {
+		if (isLogOn != '' && isLogOn != 'false') {
+			location.href = articleForm;
+		} else {
+			alert("로그인 후 글쓰기가 가능합니다.")
+			location.href = loginForm + '?action=/board/articleForm.do';
+		}
+	}
+</script>
+
 <meta charset="UTF-8">
 <title>글목록창</title>
 </head>
@@ -128,7 +141,13 @@
 	</div>
 	<br>
 	<br>
-	<a class="cls1" href="${contextPath}/board/articleForm.do"><p class="cls2">글쓰기</p></a>
+	<!-- 
+	isLogOn -> ${isLogOn}, articleForm -> ${contextPath}/board/articleForm.do,
+	loginForm -> ${contextPath}/member/loginForm.do 
+	-->
+	<a class="cls1"  href="javascript:fn_articleForm('${isLogOn}','${contextPath}/board/articleForm.do', 
+                                                    '${contextPath}/member/loginForm.do')"><p class="cls2">글쓰기</p></a>
+
 </body>
 </html>
 

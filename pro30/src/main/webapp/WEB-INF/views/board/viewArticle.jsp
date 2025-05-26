@@ -6,6 +6,8 @@
 request.setCharacterEncoding("UTF-8");
 %>
 <c:set var="contextPath" value="${pageContext.request.contextPath}" />
+<c:set var="article"  value="${articleMap.article}"  />
+<c:set var="imageFileList"  value="${articleMap.imageFileList}"  />
 
 <!DOCTYPE html>
 <html>
@@ -124,20 +126,21 @@ request.setCharacterEncoding("UTF-8");
 					<textarea rows="20" cols="60" name="content" id="i_content"disabled />${article.content }</textarea>
 				</td>
 			</tr>
-			<c:if test="${not empty article.imageFileName && article.imageFileName!='null' }">
-				<tr>
-					<td width="20%" align="center" bgcolor="#FF9933" rowspan="2">이미지</td>
-					<td><input type="hidden" name="originalFileName" id="originalFileName" 
-						value="${article.imageFileName }" /> 
-						<img src="${contextPath}/download.do?imageFileName=
-						${article.imageFileName}&articleNO=${article.articleNO }"
-						id="preview" /><br></td>
-				</tr>
-				<tr>
-					<%-- 수정된 이미지파일 전송 --%>
-					<td><input type="file" name="imageFileName "
-						id="i_imageFileName" disabled onchange="readURL(this);" /></td>
-				</tr>
+			<c:if test="${not empty imageFileList && imageFileList!='null' }">
+				<c:forEach var="item" items="${imageFileList}" varStatus="status">
+					<tr>
+						<td width="150" align="center" bgcolor="#FF9933" rowspan="2">이미지${status.count }</td>
+						<td><input type="hidden" name="originalFileName"
+							value="${item.imageFileName }" /> 
+							<img src="${contextPath}/download.do?articleNO=${article.articleNO}&imageFileName=${item.imageFileName}" 
+								id="preview" /><br>
+						</td>
+					</tr>
+					<tr>
+						<td><input type="file" name="imageFileName "
+							id="i_imageFileName" disabled onchange="readURL(this);" /></td>
+					</tr>
+				</c:forEach>
 			</c:if>
 			<tr>
 				<td width="20%" align="center" bgcolor="#FF9933">등록일자</td>
@@ -153,20 +156,24 @@ request.setCharacterEncoding("UTF-8");
 			</tr>
 			<tr id="tr_btn">	
 				<td colspan=2 align="center">
-				<!--  이미지 있을 때 -->
-   				<c:if test="${not empty article.imageFileName && article.imageFileName!='null' }"> 
-    				<input type=button value="수정하기" onClick="fn_enable(this.form)">
-    			</c:if>
-     			<!--  이미지 없을 때 -->
-    			<c:if test="${empty article.imageFileName || article.imageFileName =='null' }"> 
-   					<input type=button value="수정하기" onClick="fn_enable2(this.form)">
-    			</c:if>
+				
+				<!-- 본인이면 수정 및 삭제 가능 -->
+				<c:if test="${member.id == article.id }">
+					<!--  이미지 있을 때 -->
+	   				<c:if test="${not empty article.imageFileName && article.imageFileName!='null' }"> 
+	    				<input type=button value="수정하기" onClick="fn_enable(this.form)">
+	    			</c:if>
+	     			<!--  이미지 없을 때 -->
+	    			<c:if test="${empty article.imageFileName || article.imageFileName =='null' }"> 
+	   					<input type=button value="수정하기" onClick="fn_enable2(this.form)">
+	    			</c:if>
     			<%-- 삭제하기 클릭시 함수호출하면서 articleNO전달 --%>
 					<input type=button value="삭제하기"
-					onClick="fn_remove_article('${contextPath}/board/removeArticle.do', ${article.articleNO})">
-					<input type=button value="리스트로 돌아가기"
-					onClick="backToList(this.form)"> 
-					<input type=button value="답글쓰기"
+						onClick="fn_remove_article('${contextPath}/board/removeArticle.do', ${article.articleNO})">
+				
+				</c:if>	
+				<input type=button value="리스트로 돌아가기" onClick="backToList(this.form)"> 
+				<input type=button value="답글쓰기"
 					onClick="fn_reply_form('${contextPath}/board/replyForm.do', ${article.articleNO})">
 				</td>
 			</tr>
