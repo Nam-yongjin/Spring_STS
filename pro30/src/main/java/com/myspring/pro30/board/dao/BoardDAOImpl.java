@@ -17,11 +17,11 @@ public class BoardDAOImpl implements BoardDAO{
 	@Autowired
 	private SqlSession sqlSession;
 
-	@Override
-	public List selectAllArticlesList() throws DataAccessException {
-		List<ArticleVO> articlesList = sqlSession.selectList("mapper.board.selectAllArticlesList");
-		return articlesList;
-	}
+//	@Override
+//	public List selectAllArticlesList() throws DataAccessException {
+//		List<ArticleVO> articlesList = sqlSession.selectList("mapper.board.selectAllArticlesList");
+//		return articlesList;
+//	}
 
 	@Override
 	public int insertNewArticle(Map articleMap) throws DataAccessException {
@@ -36,11 +36,13 @@ public class BoardDAOImpl implements BoardDAO{
 		List<ImageVO> imageFileList = (ArrayList) articleMap.get("imageFileList");
 		int articleNO = (Integer) articleMap.get("articleNO");
 		int imageFileNO = selectNewImageFileNO();
-		for (ImageVO imageVO : imageFileList) {
-			imageVO.setImageFileNO(++imageFileNO);
-			imageVO.setArticleNO(articleNO);
+		if(imageFileList != null && imageFileList.size() != 0) {
+			for (ImageVO imageVO : imageFileList) {
+				imageVO.setImageFileNO(++imageFileNO);
+				imageVO.setArticleNO(articleNO);
+			}
+			sqlSession.insert("mapper.board.insertNewImage", imageFileList);
 		}
-		sqlSession.insert("mapper.board.insertNewImage", imageFileList);
 	}
 
 	private int selectNewArticleNO() throws DataAccessException {
@@ -72,26 +74,18 @@ public class BoardDAOImpl implements BoardDAO{
 	public void deleteArticle(int articleNO) throws DataAccessException {
 		sqlSession.delete("mapper.board.deleteArticle", articleNO);
 	}
-//	@Override
-//	public List selectAllArticles() throws DataAccessException{
-//
-//	}
-//	
-//	// 오버로딩
-//	public List selectAllArticles(Map pagingMap) throws DataAccessException{
-//
-//	}
-//
-//	@Override
-//	public int selectTotArticles() throws DataAccessException{
-//
-//	}
-//
-	
 
-//	
-//	public List<Integer> selectRemovedArticles(int articleNO) throws DataAccessException{
-//
-//	}
+	@Override
+	public List selectAllArticlesList(Map pagingMap) throws DataAccessException{
+		List<ArticleVO> articlesList = sqlSession.selectList("mapper.board.selectAllArticlesList", pagingMap);
+		return articlesList;
+	}
+
+	@Override
+	public int selectTotArticles() throws DataAccessException{
+		int totArticles = sqlSession.selectOne("mapper.board.selectTotArticles");
+		return totArticles;
+	}
+
 
 }

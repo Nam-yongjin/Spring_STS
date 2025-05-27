@@ -26,30 +26,61 @@
           reader.readAsDataURL(input.files[0]);
       }
   }  
+  
+ 
+	var cnt = 1;
+	function fn_addFile() {
+		cnt++;
+		// 이미지 추가
+		 var innerHtml = "";
+		 innerHtml +='<tr width=100% align=center>';
+		 innerHtml +='<td>'+
+		 			"<input type=file name='file" + cnt + "' onchange='readURL(this,"+ cnt + ")'   />"+
+		 					'</td>';
+		 innerHtml +='<td>'+
+					"<img  id='preview" + cnt + "'   width=200 height=200/></td>";
+		 innerHtml +='</tr>';
+		$("#tb_newImage").append(innerHtml);
+	}
 </script> 
 <title>답글쓰기 페이지</title>
 </head>
 <body>
  <h1 style="text-align:center">답글쓰기</h1>
  <%-- 답글 입력후 전송시 컨트롤러에 /board/addReply.do로 요청 --%>
-  <form name="frmReply" method="post"  action="${contextPath}/board/addReply.do"   enctype="multipart/form-data">
-    <table align="center">
+  <form name="frmReply" method="post"  action="${contextPath}/board/addNewArticle.do"   enctype="multipart/form-data">
+    <table border="0" align="center">
     <tr>
-			<td align="right"> 글쓴이:&nbsp; </td>
-			<td><input type="text" size="5" value="lee" disabled /> </td>
+			<td align="right">글쓴이</td>
+			<td colspan=2  align="center">${member.name }</td>
 		</tr>
 		<tr>
-			<td align="right">글제목:&nbsp;  </td>
-			<td><input type="text" size="67"  maxlength="100" name="title" /></td>
+			<td align="right">글제목</td>
+			<td colspan="2"><input type="text" size="67"  maxlength="500" name="title"  placeholder="글제목"/></td>
 		</tr>
 		<tr>
-			<td align="right" valign="top"><br>글내용:&nbsp; </td>
-			<td><textarea name="content" rows="10" cols="65" maxlength="4000"> </textarea> </td>
+			<td align="right" valign="top"><br>글내용</td>
+			<td colspan=2><textarea name="content" rows="20" cols="100" maxlength="4000" placeholder="이곳에 글을 쓰세요."></textarea></td>
 		</tr>
 		<tr>
-			<td align="right">이미지파일 첨부:  </td>
-			<td> <input type="file" name="imageFileName"  onchange="readURL(this);" /></td>
-            <td><img  id="preview" src="#"   width=200 height=200/></td>
+			<td align="right">이미지파일 첨부</td>
+			<td> <input type="file" name="imageFileName"  onchange="readURL(this, 0);" /></td>
+            <td><img  id="preview0" src="#"   width=200 height=200/></td>
+         </tr>
+		<tr>
+			<td colspan="3">
+				<table width="100%" border="0" id="tb_newImage">
+				</table>
+			</td>
+		</tr>
+		<tr height="200px">
+			<td colspan="3"></td>
+		</tr>
+		<tr>
+            <td align="right">이미지파일 첨부</td>
+				<td align="left" colspan="2">
+					<input type="button" value="파일 추가" onClick="fn_addFile()" />
+				</td>
 		</tr>
 		<tr>
 			<td align="right"> </td>

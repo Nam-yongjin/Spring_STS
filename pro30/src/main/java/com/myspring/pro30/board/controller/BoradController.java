@@ -10,7 +10,9 @@ import org.springframework.web.servlet.ModelAndView;
 
 public interface BoradController {
 
-	ModelAndView listArticles(HttpServletRequest request, HttpServletResponse response) throws Exception;
+	ModelAndView listArticles(@RequestParam("section") String section,
+			@RequestParam("pageNum") String pageNum,
+			HttpServletRequest request, HttpServletResponse response) throws Exception;
 	
 	ResponseEntity addNewArticle(MultipartHttpServletRequest multipartRequest, 
 								HttpServletRequest request, HttpServletResponse response) throws Exception;
@@ -25,11 +27,7 @@ public interface BoradController {
 							HttpServletRequest request, HttpServletResponse response) throws Exception;
 
 
-	//	public removeArticle(){
-
-	//	public replyForm(){
-
-
-	//	public addReply(){
+//	ResponseEntity addReply(MultipartHttpServletRequest multipartRequest,
+//			HttpServletRequest request, HttpServletResponse response) throws Exception;
 
 }

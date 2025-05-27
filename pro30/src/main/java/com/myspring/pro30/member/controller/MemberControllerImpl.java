@@ -131,10 +131,14 @@ public class MemberControllerImpl implements MemberController {
 	@RequestMapping(value = "/member/*Form.do", method = RequestMethod.GET)
 	private ModelAndView form(@RequestParam(value = "result", required = false) String result,
 								@RequestParam(value = "action", required = false) String action,
+								@RequestParam(value= "parentNO", required=false) String parentNO,
 			HttpServletRequest request, HttpServletResponse response) throws Exception {
 		String viewName = (String) request.getAttribute("viewName");
 		HttpSession session = request.getSession();
 		session.setAttribute("action", action);
+		if(parentNO != null)  {
+			session.setAttribute("parentNO", parentNO);
+		}
 		ModelAndView mav = new ModelAndView();
 		mav.addObject("result", result);
 		mav.setViewName(viewName);

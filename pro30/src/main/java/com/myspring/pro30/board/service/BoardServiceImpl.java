@@ -21,10 +21,11 @@ public class BoardServiceImpl  implements BoardService{
 	@Autowired
 	BoardDAO boardDAO;
 	
-	public List<ArticleVO> listArticles() throws Exception{
-		List<ArticleVO> articlesList =  boardDAO.selectAllArticlesList();
-        return articlesList;
-	}
+//	@Override
+//	public List<ArticleVO> listArticles() throws Exception{
+//		List<ArticleVO> articlesList =  boardDAO.selectAllArticlesList();
+//        return articlesList;
+//	}
 
 	// 단일 이미지 추가  ->> 다중 이미지
 	@Override
@@ -56,15 +57,28 @@ public class BoardServiceImpl  implements BoardService{
 		boardDAO.deleteArticle(articleNO);
 	}
 
+	@Override
+	public Map listArticles(Map pagingMap) throws Exception{  
+		Map articlesMap = new HashMap();
+		// 전달된 pagingMap읈 사용해 글목록 조회
+		List articlesList = boardDAO.selectAllArticlesList(pagingMap); // 해당 글 자료 10개 반환 
+		int totArticles = boardDAO.selectTotArticles(); 	// 총 글갯수 반환
+		// 조회된 글목록을 ArrayList에 저장한후 다시 articlesMap에 저장
+		articlesMap.put("articlesList", articlesList); 		
+		// 전체 총 글갯수를 articlesMap에 저장
+		articlesMap.put("totArticles", totArticles);    
+//		articlesMap.put("totArticles", 170);  // 보통 글이 100개가 안넘으니 글 갯수를 170개로 하여 테스트용
+		return articlesMap;
+	}
+	
 //	
 //	@Override
-//	public int addReply(ArticleVO article) throws Exception{
-//
+//	public int addReply(Map articleMap) throws Exception{
+//		int articleNO = boardDAO.insertNewArticle(articleMap);
+//		articleMap.put("articleNO", articleNO);
+//		boardDAO.insertNewImage(articleMap);
+//		return articleNO;
 //	}
-//
-//	@Override
-//	public Map listArticles(Map<String, Integer> pagingMap) throws Exception{  
-//
-//	}
+
 
 }

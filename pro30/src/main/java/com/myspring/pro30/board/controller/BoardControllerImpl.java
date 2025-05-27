@@ -45,12 +45,22 @@ public class BoardControllerImpl implements BoradController{
 	
 	@Override
 	@RequestMapping(value= "/board/listArticles.do", method = {RequestMethod.GET, RequestMethod.POST})
-	public ModelAndView listArticles(HttpServletRequest request, HttpServletResponse response) throws Exception {
+	public ModelAndView listArticles(@RequestParam(value="section", required=false) String _section,
+			@RequestParam(value="pageNum", required=false) String _pageNum,
+			HttpServletRequest request, HttpServletResponse response) throws Exception {
 
+		int section = Integer.parseInt(((_section == null) ? "1" : _section));
+		int pageNum = Integer.parseInt(((_pageNum == null) ? "1" : _pageNum));
+		Map pagingMap = new HashMap();
+		pagingMap.put("section", section);
+		pagingMap.put("pageNum", pageNum);
+		Map articlesMap=boardService.listArticles(pagingMap);
+		articlesMap.put("section", section);
+		articlesMap.put("pageNum", pageNum);
+		
 		String viewName = (String)request.getAttribute("viewName");
-		List articlesList = boardService.listArticles();
 		ModelAndView mav = new ModelAndView(viewName);
-		mav.addObject("articlesList", articlesList);
+		mav.addObject("articlesMap", articlesMap);
 		return mav;
 		
 	}
@@ -77,7 +87,9 @@ public class BoardControllerImpl implements BoradController{
 		MemberVO memberVO = (MemberVO)session.getAttribute("member");
 		String id = memberVO.getId();
 		articleMap.put("id", id);
-		articleMap.put("parentNO", 0);
+		
+		String parentNO = (String)session.getAttribute("parentNO")  ;
+		articleMap.put("parentNO" , (parentNO == null ? 0 : parentNO));
 			
 		List<String> fileList =upload(multipartRequest);
 		List<ImageVO> imageFileList = new ArrayList<ImageVO>();
@@ -94,33 +106,6 @@ public class BoardControllerImpl implements BoradController{
 		ResponseEntity resEnt = null;
 		HttpHeaders responseHeaders = new HttpHeaders();
 		responseHeaders.add("Content-Type", "text/html; charset=utf-8");
-		
-//		try {
-//			int articleNO = boardService.addNewArticle(articleMap);
-//			if(imageFileName!=null && imageFileName.length()!=0) {
-//				File srcFile = new 
-//				File(ARTICLE_IMAGE_REPO+"\\"+"temp"+"\\"+imageFileName);
-//				File destDir = new File(ARTICLE_IMAGE_REPO+"\\"+articleNO);
-//				FileUtils.moveFileToDirectory(srcFile, destDir,true);
-//			}
-//	
-//			message = "<script>";
-//			message += " alert('새글을 추가했습니다.');";
-//			message += " location.href='"+multipartRequest.getContextPath()+"/board/listArticles.do'; ";
-//			message +=" </script>";
-//		    resEnt = new ResponseEntity(message, responseHeaders, HttpStatus.CREATED);
-//		}catch(Exception e) {
-//			File srcFile = new File(ARTICLE_IMAGE_REPO+"\\"+"temp"+"\\"+imageFileName);
-//			srcFile.delete();
-//			
-//			message = " <script>";
-//			message +=" alert('오류가 발생했습니다. 다시 시도해 주세요');');";
-//			message +=" location.href='"+multipartRequest.getContextPath()+"/board/articleForm.do'; ";
-//			message +=" </script>";
-//			resEnt = new ResponseEntity(message, responseHeaders, HttpStatus.CREATED);
-//			e.printStackTrace();
-//		}
-//		return resEnt;
 
 		try {
 			int articleNO = boardService.addNewArticle(articleMap);
@@ -129,7 +114,6 @@ public class BoardControllerImpl implements BoradController{
 					imageFileName = imageVO.getImageFileName();
 					File srcFile = new File(ARTICLE_IMAGE_REPO+"\\"+"temp"+"\\"+imageFileName);
 					File destDir = new File(ARTICLE_IMAGE_REPO+"\\"+articleNO);
-					//destDir.mkdirs();
 					FileUtils.moveFileToDirectory(srcFile, destDir,true);
 				}
 			}		    
@@ -156,37 +140,20 @@ public class BoardControllerImpl implements BoradController{
 		return resEnt;
 	  }
 	
-	@RequestMapping(value = "/board/*Form.do", method = RequestMethod.GET)
-	private ModelAndView form(HttpServletRequest request, HttpServletResponse response) throws Exception {
+	@RequestMapping(value = "/board/*Form.do", method = {RequestMethod.GET, RequestMethod.POST})
+	private ModelAndView form(@RequestParam(value = "parentNO", required = false) String parentNO,
+					HttpServletRequest request, HttpServletResponse response) throws Exception {
 		String viewName = (String) request.getAttribute("viewName");
+		if(viewName.equals("/board/replyForm")) {
+			HttpSession session = request.getSession();
+			if(parentNO != null)  {
+				session.setAttribute("parentNO", parentNO);
+			}
+		}
 		ModelAndView mav = new ModelAndView();
 		mav.setViewName(viewName);
 		return mav;
 	}
-	
-//	//한개 이미지 업로드
-//	private String upload(MultipartHttpServletRequest multipartRequest) throws Exception {
-//		String imageFileName = null;
-//		Iterator<String> fileNames = multipartRequest.getFileNames();
-//
-//		while (fileNames.hasNext()) {
-//			String fileName = fileNames.next();
-//			MultipartFile mFile = multipartRequest.getFile(fileName);
-//			imageFileName = mFile.getOriginalFilename();
-//			File file = new File(ARTICLE_IMAGE_REPO + "\\" + fileName);
-//			if (mFile.getSize() != 0) { // File Null Check
-//				if (!file.exists()) { // 경로상에 파일이 존재하지 않을 경우
-//					if (file.getParentFile().mkdirs()) { // 경로에 해당하는 디렉토리들을 생성
-//						file.createNewFile(); // 이후 파일 생성
-//					}
-//				}
-//				mFile.transferTo(new File(ARTICLE_IMAGE_REPO + "\\" + "temp" + "\\" + imageFileName));
-//				// 임시로 저장된 multipartFile을 실제 파일로 전송
-//			}
-//		}
-//		return imageFileName;
-//	}
-//	
 	
 	// 다중 이미지 업로드하기
 	private List<String> upload(MultipartHttpServletRequest multipartRequest) throws Exception {
@@ -241,7 +208,6 @@ public class BoardControllerImpl implements BoradController{
 		HttpSession session = multipartRequest.getSession();
 		MemberVO memberVO = (MemberVO)session.getAttribute("member");
 		String id = memberVO.getId();
-		articleMap.put("parentNO", 0);
 		articleMap.put("id", id);
 		
 		List<String> fileList =upload(multipartRequest);
@@ -261,34 +227,6 @@ public class BoardControllerImpl implements BoradController{
 		HttpHeaders responseHeaders = new HttpHeaders();
 		responseHeaders.add("Content-Type", "texl/html; charset=utf-8");
 		
-//		try {
-//			boardService.modArticle(articleMap);
-//			if(imageFileList != null && imageFileList.size() != 0) {
-//		        File srcFile = new File(ARTICLE_IMAGE_REPO+"\\"+"temp"+"\\"+imageFileList);
-//		        File destDir = new File(ARTICLE_IMAGE_REPO+"\\"+articleNO);
-//		        FileUtils.moveFileToDirectory(srcFile, destDir, true);
-//		        
-//		        String originalFileName = (String)articleMap.get("originalFileName");
-//		        File oldFile = new File(ARTICLE_IMAGE_REPO+"\\"+articleNO+"\\"+originalFileName);
-//		        oldFile.delete();
-//		        
-//		        message = "<script>";
-//		        message += " alert('글을 수정했습니다.');";
-//		        message += " location.href='"+multipartRequest.getContextPath()+"/board/viewArticle.do?articleNO="+articleNO+"';";
-//		        message +=" </script>";
-//		        resEnt = new ResponseEntity(message, responseHeaders, HttpStatus.CREATED);
-//			}
-//		}catch(Exception e) {
-//			  File srcFile = new File(ARTICLE_IMAGE_REPO+"\\"+"temp"+"\\"+imageFileList);
-//		      srcFile.delete();
-//		      message = "<script>";
-//			  message += " alert('오류가 발생했습니다.다시 수정해주세요');";
-//			  message += " location.href='"+multipartRequest.getContextPath()+"/board/viewArticle.do?articleNO="+articleNO+"';";
-//			  message +=" </script>";
-//		      resEnt = new ResponseEntity(message, responseHeaders, HttpStatus.CREATED);
-//		}
-//	    return resEnt;
-	    
 	    try {
 			boardService.modArticle(articleMap);
 			if (imageFileList != null && imageFileList.size() != 0) {
@@ -306,7 +244,7 @@ public class BoardControllerImpl implements BoradController{
 			
 			message = "<script>";
 	        message += " alert('글을 수정했습니다.');";
-	        message += " location.href='"+multipartRequest.getContextPath()+"/board/viewArticle.do?articleNO="+articleNO+"'; ";
+	        message += " location.href='"+multipartRequest.getContextPath()+"/board/listArticles.do'; ";
 	        message +=" </script>";
 	        resEnt = new ResponseEntity(message, responseHeaders, HttpStatus.CREATED);
 		} catch (Exception e) {
@@ -360,15 +298,80 @@ public class BoardControllerImpl implements BoradController{
 		return resEnt;
 
 	}
-//	
-//	@RequestMapping(value = "/board/replyForm.do", method = { RequestMethod.GET, RequestMethod.POST })
-//	public replyForm(){
+
+//	@Override
+//	@RequestMapping(value = "/board/addReply.do", method = { RequestMethod.POST })
+//	@ResponseBody
+//	public ResponseEntity addReply(MultipartHttpServletRequest multipartRequest,
+//							HttpServletRequest request, HttpServletResponse response) throws Exception{
+//		
+//		multipartRequest.setCharacterEncoding("utf-8");
+//		String imageFileName=null;
+//		
+//		Map articleMap = new HashMap();
+//		Enumeration enu = multipartRequest.getParameterNames();
+//		while(enu.hasMoreElements()){
+//			String name=(String)enu.nextElement();
+//			String value=multipartRequest.getParameter(name);
+//			articleMap.put(name,value);
+//		}
 //
-//	}
-//	
-//	@RequestMapping(value = "/board/addReply.do", method = { RequestMethod.GET, RequestMethod.POST })
-//	public addReply(){
-//
+//		HttpSession session = multipartRequest.getSession();
+//		MemberVO memberVO = (MemberVO)session.getAttribute("member");
+//		ArticleVO articleVO = (ArticleVO)session.getAttribute("article");
+//		String id = memberVO.getId();
+//		int parentNO = articleVO.getParentNO();
+//		System.out.println(parentNO);
+//		articleMap.put("id", id);
+//		articleMap.put("parentNO", parentNO);
+//		
+//		List<String> fileList =upload(multipartRequest);
+//		List<ImageVO> imageFileList = new ArrayList<ImageVO>();
+//		if(fileList!= null && fileList.size()!=0) {
+//			for(String fileName : fileList) {
+//				ImageVO imageVO = new ImageVO();
+//				imageVO.setImageFileName(fileName);
+//				imageFileList.add(imageVO);
+//			}
+//			articleMap.put("imageFileList", imageFileList);
+//		}
+//		
+//		String message;
+//		ResponseEntity resEnt = null;
+//		HttpHeaders responseHeaders = new HttpHeaders();
+//		responseHeaders.add("Content-Type", "text/html; charset=utf-8");
+//		
+//		try {
+//			int articleNO = boardService.addReply(articleMap);
+//			if(imageFileList!=null && imageFileList.size()!=0) {
+//				for(ImageVO  imageVO:imageFileList) {
+//					imageFileName = imageVO.getImageFileName();
+//					File srcFile = new File(ARTICLE_IMAGE_REPO+"\\"+"temp"+"\\"+imageFileName);
+//					File destDir = new File(ARTICLE_IMAGE_REPO+"\\"+articleNO);
+//					FileUtils.moveFileToDirectory(srcFile, destDir,true);
+//				}
+//			}		    
+//			message = "<script>";
+//			message += " alert('답글을 추가했습니다.');";
+//			message += " location.href='"+multipartRequest.getContextPath()+"/board/viewArticle.do?articleNO=" + articleNO + "'; ";
+//			message +=" </script>";
+//	       	    resEnt = new ResponseEntity(message, responseHeaders, HttpStatus.CREATED);   		 
+//		 }catch(Exception e) {
+//			if(imageFileList!=null && imageFileList.size()!=0) {
+//			  for(ImageVO  imageVO:imageFileList) {
+//			  	imageFileName = imageVO.getImageFileName();
+//				File srcFile = new File(ARTICLE_IMAGE_REPO+"\\"+"temp"+"\\"+imageFileName);
+//			 	srcFile.delete();
+//			  }
+//			}
+//			message = " <script>";
+//			message +=" alert('오류가 발생했습니다. 다시 시도해 주세요');";
+//			message +=" location.href='"+multipartRequest.getContextPath()+"/board/replyForm.do'; ";
+//			message +=" </script>";
+//			resEnt = new ResponseEntity(message, responseHeaders, HttpStatus.CREATED);
+//			e.printStackTrace();
+//		 }
+//		return resEnt;
 //	}
 	
 	

@@ -4,6 +4,12 @@
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
 <c:set var="contextPath" value="${pageContext.request.contextPath}" />
 
+<%-- HashMap으로 넘어온 값들은 이름이 길어서 c:set으로 짧은 변수이름으로 저장 --%>
+<c:set  var="articlesList"  value="${articlesMap.articlesList}" />
+<c:set  var="totArticles"  value="${articlesMap.totArticles}" />
+<c:set  var="section"  value="${articlesMap.section}" />
+<c:set  var="pageNum"  value="${articlesMap.pageNum}" />
+
 <%
   request.setCharacterEncoding("UTF-8");
 %>
@@ -64,13 +70,13 @@
 				</tr>
 			</c:when>
 			<c:when test="${!empty articlesList}">
-				<c:forEach var="article" items="${articlesList}"
-					varStatus="articleNum">
+				<c:forEach var="article" items="${articlesList}" varStatus="articleNum">
 					<tr align="center">
 						<td width="5%">${articleNum.count}</td>
 						<td width="10%">${article.id }</td>
-						<td align='left' width="35%"><span
-							style="padding-right: 30px"></span> <c:choose>
+						<td align='left' width="35%">
+							<span style="padding-right: 30px"></span> 
+							<c:choose>
 								<c:when test='${article.level > 1 }'>
 									<c:forEach begin="1" end="${article.level }" step="1">
 										<span style="padding-left: 10px"></span>

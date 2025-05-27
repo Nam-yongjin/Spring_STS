@@ -9,7 +9,7 @@ import com.myspring.pro30.board.vo.ArticleVO;
 
 public interface BoardDAO {
 
-	List selectAllArticlesList() throws DataAccessException;
+//	List selectAllArticlesList() throws DataAccessException;
 
 	int insertNewArticle(Map articleMap) throws DataAccessException;
 
@@ -22,20 +22,10 @@ public interface BoardDAO {
 	void updateArticle(Map articleMap) throws DataAccessException;
 
 	void deleteArticle(int articleNO) throws DataAccessException;
-	//	@Override
-	//	public List selectAllArticles() throws DataAccessException{
-	//
-	//	}
-	//	
-	//	// 오버로딩
-	//	public List selectAllArticles(Map pagingMap) throws DataAccessException{
-	//
-	//	}
-	//
-	//	@Override
-	//	public int selectTotArticles() throws DataAccessException{
-	//
-	//	}
-	//
+
+	int selectTotArticles() throws DataAccessException;
+	
+	List selectAllArticlesList(Map pagingMap) throws DataAccessException;
+
 
 }
