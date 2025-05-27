@@ -5,7 +5,7 @@
 
 <mapper namespace="mapper.board">
     <resultMap id="articlesResult" type="articleVO">
-        <result property="level" column="level" />
+        <result property="level" column="lvl" />
         <result property="articleNO" column="articleNO" />
         <result property="parentNO" column="parentNO" />
         <result property="title" column="title" />
