@@ -18,6 +18,7 @@ public interface BoradController {
 								HttpServletRequest request, HttpServletResponse response) throws Exception;
 		
 	ModelAndView viewArticle(@RequestParam("articleNO") int articleNO,
+			@RequestParam(value="removeCompleted", required=false) String removeCompleted,
 								HttpServletRequest request, HttpServletResponse response) throws Exception;
 
 	ResponseEntity modArticle(MultipartHttpServletRequest multipartRequest,  

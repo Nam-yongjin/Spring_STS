@@ -20,12 +20,6 @@ public class BoardServiceImpl  implements BoardService{
 
 	@Autowired
 	BoardDAO boardDAO;
-	
-//	@Override
-//	public List<ArticleVO> listArticles() throws Exception{
-//		List<ArticleVO> articlesList =  boardDAO.selectAllArticlesList();
-//        return articlesList;
-//	}
 
 	// 단일 이미지 추가  ->> 다중 이미지
 	@Override
@@ -50,6 +44,25 @@ public class BoardServiceImpl  implements BoardService{
 	@Override
 	public void modArticle(Map articleMap) throws Exception{
 		boardDAO.updateArticle(articleMap);
+		
+		List<ImageVO> imageFileList = (List<ImageVO>)articleMap.get("imageFileList");
+		List<ImageVO> modAddimageFileList = (List<ImageVO>)articleMap.get("modAddimageFileList");
+		
+		if(imageFileList != null && imageFileList.size() != 0) {
+			int added_img_num = Integer.parseInt((String)articleMap.get("added_img_num"));
+			int pre_img_num = Integer.parseInt((String)articleMap.get("pre_img_num"));
+
+			if (pre_img_num < added_img_num) {
+				boardDAO.updateImageFile(articleMap); // 기존 이미지도 수정하고 새 이미지도 추가한 경우
+				boardDAO.insertModNewImage(articleMap);
+			} else {
+				boardDAO.updateImageFile(articleMap); // 기존의 이미지를 수정만 한 경우
+			}
+		} else if (modAddimageFileList != null && modAddimageFileList.size() != 0) { // 새 이미지를 추가한 경우
+			boardDAO.insertModNewImage(articleMap);
+		}
+
+		
 	}
 
 	@Override
@@ -71,14 +84,8 @@ public class BoardServiceImpl  implements BoardService{
 		return articlesMap;
 	}
 	
-//	
-//	@Override
-//	public int addReply(Map articleMap) throws Exception{
-//		int articleNO = boardDAO.insertNewArticle(articleMap);
-//		articleMap.put("articleNO", articleNO);
-//		boardDAO.insertNewImage(articleMap);
-//		return articleNO;
-//	}
-
-
+	@Override
+	public void removeModImage(ImageVO imageVO) throws Exception {
+		boardDAO.deleteModImage(imageVO);
+	}
 }

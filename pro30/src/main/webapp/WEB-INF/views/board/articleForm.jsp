@@ -16,11 +16,11 @@
 <script  src="http://code.jquery.com/jquery-latest.min.js"></script>
 <script type="text/javascript">
 	// 이미지 첨부파일 업로드 알고리즘
-	function readURL(input){
+	function readURL(input, index){
 		if(input.files && input.files[0]){  //  input 태그에 첫번째 선택파일이 있으면
 			var reader = new FileReader();
 			reader.onload = function(e){
-				$('#preview').attr('src', e.target.result);	// src ="#"에 e.target.result 추가한다.
+				$('#preview' + index).attr('src', e.target.result);	// src ="#"에 e.target.result 추가한다.
 			}
 			reader.readAsDataURL(input.files[0]);
 		}
@@ -32,57 +32,72 @@
 		obj.submit();
 	}
 	
-	var cnt=1;
-	function fn_addFile(){
-	    $("#d_file").append("<br>"+"<input type='file' name='file"+cnt+"' />");
-	    cnt++;
-	}  
 
+	  var cnt=1;
+	  function fn_addFile(){
+		 cnt++;
+		 var innerHtml = "";
+		 innerHtml +='<tr  width=100%  align=center>';
+		 innerHtml +='<td >'+
+		 						"<input  type=file  name='file" + cnt + "'  onchange='readURL(this,"+ cnt + ")'   />"+
+		 					'</td>';
+		 innerHtml +='<td>'+
+							"<img  id='preview" + cnt + "''   width=200 height=200/>"+
+		                   	'</td>';
+		 innerHtml +='</tr>';
+		 $("#tb_newImage").append(innerHtml);
+	  }
 </script>
 </head>
 <body>
-	<h1 style="text-align:center">새글 쓰기</h1>
-	<form name="articleForm" method="post"   action="${contextPath}/board/addNewArticle.do"   enctype="multipart/form-data">
-		<table border=0 align="center">
+	<h1 style="text-align: center">글쓰기</h1>
+	<form name="articleForm" method="post" action="${contextPath}/board/addNewArticle.do" enctype="multipart/form-data">
+		<table border="0" align="center">
 			<tr>
 				<td align="right">작성자</td>
-				<td colspan=2 align="left">
-					<input type="text" size="20" maxlength="100" value="${member.name }" readonly />
-				</td>
+				<td colspan=2 align="center">${member.name }</td>
 			</tr>
 			<tr>
-				<td align="right">글제목: </td>
-				<td colspan="2">
-					<input type="text" size="67"  maxlength="500" name="title" />
-				</td>
+				<td align="right">글제목:</td>
+				<td colspan="2"><input type="text" size="67" maxlength="500"
+					name="title" placeholder="글제목" /></td>
 			</tr>
 			<tr>
-				<td align="right" valign="top"><br>글내용: </td>
-				<td colspan=2>
-					<textarea name="content" rows="10" cols="65" maxlength="4000"></textarea> 
-				</td>
+				<td align="right" valign="top"><br>글내용:</td>
+				<td colspan=2><textarea name="content" rows="20" cols="100"
+						maxlength="4000" placeholder="이곳에 글을 쓰세요."></textarea></td>
 			</tr>
 			<tr>
-				<td align="right">이미지파일 첨부:</td>
-				<td><input type="file" name="imageFileName" onchange="readURL(this);" /></td>
-				<%-- 이미지 미리보기 --%>
-				<td><img id="preview" src="#" width=200 height=200 /></td>
 				<td align="right">이미지파일 첨부</td>
-				<td align="left">
-					<input type="button" value="파일 추가" onClick="fn_addFile()" />
+				<td><input type="file" name="imageFileName"
+					onchange="readURL(this, 0);" /></td>
+				<td><img id="preview0" src="#" width=200 height=200 /></td>
+			</tr>
+
+			<tr>
+				<td colspan="3">
+					<table width="100%" border="0" id="tb_newImage">
+					</table>
+				</td>
+			</tr>
+			<tr height="200px">
+				<td colspan="3"></td>
+			</tr>
+			<tr>
+				<td align="right">이미지파일 첨부</td>
+				<td align="left" colspan="2"><input type="button"
+					value="새 이미지 파일 추가하기" onClick="fn_addFile()" />
 				</td>
 			</tr>
 			<tr>
-      			<td colspan="4"><div id="d_file"></div></td>
-   			</tr>
-			
+				<td colspan="4"><div id="d_file"></div></td>
+			</tr>
+
 			</tr>
 			<tr>
-				<td align="right"> </td>
-				<td colspan="2">
-					<input type="submit" value="글쓰기" />
-					<input type=button value="목록보기"onClick="backToList(this.form)" />
-				</td>
+				<td align="right"></td>
+				<td colspan="2"><input type="submit" value="글쓰기" /> <input
+					type=button value="목록보기" onClick="backToList(this.form)" /></td>
 			</tr>
 		</table>
 	</form>

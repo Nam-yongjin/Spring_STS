@@ -4,10 +4,9 @@ import java.util.List;
 import java.util.Map;
 
 import com.myspring.pro30.board.vo.ArticleVO;
+import com.myspring.pro30.board.vo.ImageVO;
 
 public interface BoardService {
-
-//	List<ArticleVO> listArticles() throws Exception;
 
 	// 단일 이미지 추가  ->> 다중 이미지
 	int addNewArticle(Map articleMap) throws Exception;
@@ -19,8 +18,9 @@ public interface BoardService {
 
 	void removeArticle(int articleNO) throws Exception;
 
-//	int addReply(Map articleMap) throws Exception;
 	
 	Map listArticles(Map<String, Integer> pagingMap) throws Exception;
+	
+	void removeModImage(ImageVO imageVO) throws Exception;
 
 }

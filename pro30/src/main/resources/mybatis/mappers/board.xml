@@ -13,22 +13,11 @@
         <result property="writeDate" column="writeDate" />
         <result property="imageFileName" column="imageFileName" />
     </resultMap>
-<!-- 
-    <select id="selectAllArticlesList" resultMap="articlesResult">
-        <![CDATA[
-            SELECT level, articleNO, parentNO, title, content, writeDate, imageFileName, id
-            FROM t_board
-            START WITH parentNO = 0
-            CONNECT BY PRIOR articleNO = parentNO 
-            ORDER SIBLINGS BY articleNO DESC
-        ]]>
-    </select>
- -->
     <!-- 단일이미지    이미지 제외 글쓰기 -->
     <insert id="insertNewArticle" parameterType="java.util.Map">
         <![CDATA[
-            insert into t_board(articleNO, id, title, content, imageFileName)
-            values(#{articleNO},  #{id}, #{title}, #{content}, null)
+            insert into t_board(articleNO, parentNO, id, title, content, imageFileName)
+            values(#{articleNO}, #{parentNO}, #{id}, #{title}, #{content}, null)
         ]]>
     </insert>
 
@@ -114,7 +103,17 @@
         ]]>
     </select>
     
+    <insert id="insertModNewImage" parameterType="java.util.Map">
+    	<foreach item="item" collection="list" open="insert all" separator=" " close="select * from dual">
+    		into t_imageFile(imageFileNO, imageFileName, articleNO, regDate)
+    		values(#{item.imageFileNO}, #{item.imageFileName}, #{item.articleNO}, sysDate)
+    	</foreach>
+    </insert>
     
-    
-    
+    <delete id="deleteModImage" parameterType="imageVO">
+    	<![CDATA[
+            delete from t_imageFile
+            where articleNO=#{articleNO} and imageFileNO = #{imageFileNO}
+        ]]>
+    </delete>
 </mapper>

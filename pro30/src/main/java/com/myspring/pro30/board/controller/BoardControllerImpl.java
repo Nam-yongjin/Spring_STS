@@ -1,6 +1,7 @@
 package com.myspring.pro30.board.controller;
 
 import java.io.File;
+import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.HashMap;
@@ -119,9 +120,9 @@ public class BoardControllerImpl implements BoradController{
 			}		    
 			message = "<script>";
 			message += " alert('새글을 추가했습니다.');";
-			message += " location.href='"+multipartRequest.getContextPath()+"/board/listArticles.do'; ";
+			message += " location.href='" + multipartRequest.getContextPath() + "/board/viewArticle.do?articleNO=" + articleMap.get("articleNO") + "';" ;
 			message +=" </script>";
-	       	    resEnt = new ResponseEntity(message, responseHeaders, HttpStatus.CREATED);   		 
+	       	resEnt = new ResponseEntity(message, responseHeaders, HttpStatus.CREATED);   		 
 		 }catch(Exception e) {
 			if(imageFileList!=null && imageFileList.size()!=0) {
 			  for(ImageVO  imageVO:imageFileList) {
@@ -163,13 +164,15 @@ public class BoardControllerImpl implements BoradController{
 			String fileName = fileNames.next();
 			MultipartFile mFile = multipartRequest.getFile(fileName);
 			String originalFileName = mFile.getOriginalFilename();
-			fileList.add(originalFileName);
-			File file = new File(ARTICLE_IMAGE_REPO + "\\" + "temp" + "\\" + fileName);
-			if (mFile.getSize() != 0) { // File Null Check
-				if (!file.exists()) { // 경로상에 파일이 존재하지 않을 경우
-					file.getParentFile().mkdirs(); // 경로에 해당하는 디렉토리들을 생성
-					mFile.transferTo(new File(ARTICLE_IMAGE_REPO + "\\" + "temp" + "\\" + originalFileName)); 
-					// 임시로 저장된 multipartFile을 실제 파일로 전송
+			if (originalFileName != "" && originalFileName != null) { // File Null Check
+				fileList.add(originalFileName);
+				File file = new File(ARTICLE_IMAGE_REPO + "\\" + "temp" + "\\" + fileName);
+				if (mFile.getSize() != 0) {
+					if (!file.exists()) { // 경로상에 파일이 존재하지 않을 경우
+						file.getParentFile().mkdirs(); // 경로에 해당하는 디렉토리들을 생성
+						mFile.transferTo(new File(ARTICLE_IMAGE_REPO + "\\" + "temp" + "\\" + originalFileName)); 
+						// 임시로 저장된 multipartFile을 실제 파일로 전송
+					}
 				}
 			}
 		}
@@ -179,9 +182,11 @@ public class BoardControllerImpl implements BoradController{
 	//다중 이미지 보여주기
 	@RequestMapping(value="/board/viewArticle.do" ,method = RequestMethod.GET)
 	public ModelAndView viewArticle(@RequestParam("articleNO") int articleNO,
+			@RequestParam(value="removeCompleted", required=false) String removeCompleted,
 								HttpServletRequest request, HttpServletResponse response) throws Exception{
 		String viewName = (String)request.getAttribute("viewName");
 		Map articleMap = boardService.viewArticle(articleNO);
+		articleMap.put("removeCompleted", removeCompleted );
 		ModelAndView mav = new ModelAndView();
 		mav.setViewName(viewName);
 		mav.addObject("articleMap", articleMap);
@@ -194,70 +199,105 @@ public class BoardControllerImpl implements BoradController{
 	public ResponseEntity modArticle(MultipartHttpServletRequest multipartRequest,  
 		    										HttpServletResponse response) throws Exception{
 		multipartRequest.setCharacterEncoding("utf-8");		
-		String imageFileName=null;
 		
 		Map articleMap = new HashMap();
 		Enumeration enu=multipartRequest.getParameterNames();
 		while(enu.hasMoreElements()){
 			String name=(String)enu.nextElement();
-			String value=multipartRequest.getParameter(name);
-			articleMap.put(name,value);
+			
+			if(name.equals("imageFileNO")) {
+				String[] values = multipartRequest.getParameterValues(name);
+				articleMap.put(name,values);
+			}else if(name.equals("oldFileName")) {
+				String[] values = multipartRequest.getParameterValues(name);
+				articleMap.put(name,values);
+			}else {
+				String value = multipartRequest.getParameter(name);
+				articleMap.put(name,value);
+			}
+			
+			
 		}
 
-		//로그인 시 세션에 저장된 회원 정보에서 글쓴이 아이디를 얻어와서 Map에 저장
-		HttpSession session = multipartRequest.getSession();
-		MemberVO memberVO = (MemberVO)session.getAttribute("member");
-		String id = memberVO.getId();
-		articleMap.put("id", id);
+		List<String> fileList = uploadModImageFile(multipartRequest);
 		
-		List<String> fileList =upload(multipartRequest);
+		int added_img_num = Integer.parseInt((String)articleMap.get("added_img_num"));
+		int pre_img_num = Integer.parseInt((String)articleMap.get("pre_img_num"));	
+		
+//		기존의 이미지를 수정해서 첨부한 이미지는 imageFileList에, 새로 추가한 이미지는 modAddImageFileList에 저장한다.
 		List<ImageVO> imageFileList = new ArrayList<ImageVO>();
+		List<ImageVO> modAddimageFileList = new ArrayList<ImageVO>();
+		
 		if(fileList!= null && fileList.size()!=0) {
-			for(String fileName : fileList) {
+			String[] imageFileNO = (String[])articleMap.get("imageFileNO");
+			for(int i = 0; i < added_img_num; i++) {
+				String fileName = fileList.get(i);
 				ImageVO imageVO = new ImageVO();
-				imageVO.setImageFileName(fileName);
-				imageFileList.add(imageVO);
+				if(i < pre_img_num) {
+					imageVO.setImageFileName(fileName);
+					imageVO.setImageFileNO(Integer.parseInt(imageFileNO[i]));
+					imageFileList.add(imageVO);
+					articleMap.put("imageFileList", imageFileList);
+				}else {
+					imageVO.setImageFileName(fileName);
+					modAddimageFileList.add(imageVO);
+					articleMap.put("modAddimageFileList", modAddimageFileList);
+				}
 			}
-			articleMap.put("imageFileList", imageFileList);
+			
 		}
 				
 		String articleNO = (String)articleMap.get("articleNO");
 		String message;
 		ResponseEntity resEnt = null;
 		HttpHeaders responseHeaders = new HttpHeaders();
-		responseHeaders.add("Content-Type", "texl/html; charset=utf-8");
+		responseHeaders.add("Content-Type", "text/html; charset=utf-8");
 		
 	    try {
 			boardService.modArticle(articleMap);
-			if (imageFileList != null && imageFileList.size() != 0) {
-				for (ImageVO imageVO : imageFileList) {
-					imageFileName = imageVO.getImageFileName();
-					File srcFile = new File(ARTICLE_IMAGE_REPO + "\\" + "temp" + "\\" + imageFileName);
-					File destDir = new File(ARTICLE_IMAGE_REPO + "\\" + articleNO);
-					FileUtils.moveFileToDirectory(srcFile, destDir, true);
+			if (fileList != null && fileList.size() != 0) {
+				for (int i = 0; i < fileList.size(); i++) {
+					String fileName = fileList.get(i);
+					if(i<pre_img_num) {
+						if(fileName != null) {
+							File srcFile = new File(ARTICLE_IMAGE_REPO + "\\" + "temp" + "\\" + fileName);
+							File destDir = new File(ARTICLE_IMAGE_REPO + "\\" + articleNO);
+							FileUtils.moveFileToDirectory(srcFile, destDir, true);
+							
+							   // 기존 이미지 파일명이 oldFileName으로 map에서 가져와 삭제한다
+							String[] oldName = (String[])articleMap.get("oldFileName");
+							String oldFileName = oldName[i];
+							
+							File oldFile = new File(ARTICLE_IMAGE_REPO+"\\"+articleNO+"\\"+oldFileName);
+						    oldFile.delete();
+						}
+					}else {
+						File srcFile = new File(ARTICLE_IMAGE_REPO + "\\" + "temp" + "\\" + fileName);
+						File destDir = new File(ARTICLE_IMAGE_REPO + "\\" + articleNO);
+						FileUtils.moveFileToDirectory(srcFile, destDir, true);
+					}
 				}
-				
-				String originalFileName = (String)articleMap.get("originalFileName");
-			    File oldFile = new File(ARTICLE_IMAGE_REPO+"\\"+articleNO+"\\"+originalFileName);
-			    oldFile.delete();
+			    
 			}
 			
 			message = "<script>";
 	        message += " alert('글을 수정했습니다.');";
-	        message += " location.href='"+multipartRequest.getContextPath()+"/board/listArticles.do'; ";
+	        message += " location.href='" + multipartRequest.getContextPath() + "/board/viewArticle.do?articleNO="
+					+ articleNO + "';";
 	        message +=" </script>";
 	        resEnt = new ResponseEntity(message, responseHeaders, HttpStatus.CREATED);
 		} catch (Exception e) {
-			if (imageFileList != null && imageFileList.size() != 0) {
-				for (ImageVO imageVO : imageFileList) {
-					imageFileName = imageVO.getImageFileName();
-					File srcFile = new File(ARTICLE_IMAGE_REPO + "\\" + "temp" + "\\" + imageFileName);
+			if (fileList != null && fileList.size() != 0) {
+				for (int i = 0; i < fileList.size(); i++) {
+					File srcFile = new File(ARTICLE_IMAGE_REPO + "\\" + "temp" + "\\" + fileList.get(i));
 					srcFile.delete();
 				}
+				e.printStackTrace();
 			}
 			message = "<script>";
 			message += " alert('오류가 발생했습니다.다시 수정해주세요');";
-			message += " location.href='"+multipartRequest.getContextPath()+"/board/viewArticle.do?articleNO="+articleNO+"'; ";
+			message += " location.href='" + multipartRequest.getContextPath() + "/board/viewArticle.do?articleNO="
+					+ articleNO + "';";
 			message +=" </script>";
 		    resEnt = new ResponseEntity(message, responseHeaders, HttpStatus.CREATED);
 		}
@@ -299,80 +339,59 @@ public class BoardControllerImpl implements BoradController{
 
 	}
 
-//	@Override
-//	@RequestMapping(value = "/board/addReply.do", method = { RequestMethod.POST })
-//	@ResponseBody
-//	public ResponseEntity addReply(MultipartHttpServletRequest multipartRequest,
-//							HttpServletRequest request, HttpServletResponse response) throws Exception{
-//		
-//		multipartRequest.setCharacterEncoding("utf-8");
-//		String imageFileName=null;
-//		
-//		Map articleMap = new HashMap();
-//		Enumeration enu = multipartRequest.getParameterNames();
-//		while(enu.hasMoreElements()){
-//			String name=(String)enu.nextElement();
-//			String value=multipartRequest.getParameter(name);
-//			articleMap.put(name,value);
-//		}
-//
-//		HttpSession session = multipartRequest.getSession();
-//		MemberVO memberVO = (MemberVO)session.getAttribute("member");
-//		ArticleVO articleVO = (ArticleVO)session.getAttribute("article");
-//		String id = memberVO.getId();
-//		int parentNO = articleVO.getParentNO();
-//		System.out.println(parentNO);
-//		articleMap.put("id", id);
-//		articleMap.put("parentNO", parentNO);
-//		
-//		List<String> fileList =upload(multipartRequest);
-//		List<ImageVO> imageFileList = new ArrayList<ImageVO>();
-//		if(fileList!= null && fileList.size()!=0) {
-//			for(String fileName : fileList) {
-//				ImageVO imageVO = new ImageVO();
-//				imageVO.setImageFileName(fileName);
-//				imageFileList.add(imageVO);
-//			}
-//			articleMap.put("imageFileList", imageFileList);
-//		}
-//		
-//		String message;
-//		ResponseEntity resEnt = null;
-//		HttpHeaders responseHeaders = new HttpHeaders();
-//		responseHeaders.add("Content-Type", "text/html; charset=utf-8");
-//		
-//		try {
-//			int articleNO = boardService.addReply(articleMap);
-//			if(imageFileList!=null && imageFileList.size()!=0) {
-//				for(ImageVO  imageVO:imageFileList) {
-//					imageFileName = imageVO.getImageFileName();
-//					File srcFile = new File(ARTICLE_IMAGE_REPO+"\\"+"temp"+"\\"+imageFileName);
-//					File destDir = new File(ARTICLE_IMAGE_REPO+"\\"+articleNO);
-//					FileUtils.moveFileToDirectory(srcFile, destDir,true);
-//				}
-//			}		    
-//			message = "<script>";
-//			message += " alert('답글을 추가했습니다.');";
-//			message += " location.href='"+multipartRequest.getContextPath()+"/board/viewArticle.do?articleNO=" + articleNO + "'; ";
-//			message +=" </script>";
-//	       	    resEnt = new ResponseEntity(message, responseHeaders, HttpStatus.CREATED);   		 
-//		 }catch(Exception e) {
-//			if(imageFileList!=null && imageFileList.size()!=0) {
-//			  for(ImageVO  imageVO:imageFileList) {
-//			  	imageFileName = imageVO.getImageFileName();
-//				File srcFile = new File(ARTICLE_IMAGE_REPO+"\\"+"temp"+"\\"+imageFileName);
-//			 	srcFile.delete();
-//			  }
-//			}
-//			message = " <script>";
-//			message +=" alert('오류가 발생했습니다. 다시 시도해 주세요');";
-//			message +=" location.href='"+multipartRequest.getContextPath()+"/board/replyForm.do'; ";
-//			message +=" </script>";
-//			resEnt = new ResponseEntity(message, responseHeaders, HttpStatus.CREATED);
-//			e.printStackTrace();
-//		 }
-//		return resEnt;
-//	}
+	@RequestMapping(value = "/board/removeModImage.do", method = RequestMethod.POST)
+	@ResponseBody
+	public void removeModImage(HttpServletRequest request, HttpServletResponse response) throws Exception {
+
+		request.setCharacterEncoding("utf-8");
+		response.setContentType("text/html; charset=utf-8");
+		PrintWriter writer = response.getWriter();
+
+		try {
+			String imageFileNO = (String) request.getParameter("imageFileNO");
+			String imageFileName = (String) request.getParameter("imageFileName");
+			String articleNO = (String) request.getParameter("articleNO");
+			
+			System.out.println("imageFileNO = " + imageFileNO);
+			System.out.println("articleNO = " + articleNO);
+
+			ImageVO imageVO = new ImageVO();
+			imageVO.setArticleNO(Integer.parseInt(articleNO));
+			imageVO.setImageFileNO(Integer.parseInt(imageFileNO));
+			boardService.removeModImage(imageVO);
+			
+			File oldFile = new File(ARTICLE_IMAGE_REPO + "\\" + articleNO + "\\" + imageFileName);
+			oldFile.delete();
+			
+			writer.print("success");
+		} catch (Exception e) {
+			writer.print("failed");
+		}
+
+	}
 	
+	private List<String> uploadModImageFile(MultipartHttpServletRequest multipartRequest) throws Exception {
+		List<String> fileList = new ArrayList<String>();
+		Iterator<String> fileNames = multipartRequest.getFileNames();
+		while (fileNames.hasNext()) {
+			String fileName = fileNames.next();
+			MultipartFile mFile = multipartRequest.getFile(fileName);
+			String originalFileName = mFile.getOriginalFilename();
+			if (originalFileName != "" && originalFileName != null) {
+				fileList.add(originalFileName);
+				File file = new File(ARTICLE_IMAGE_REPO + "\\" + fileName);
+				if (mFile.getSize() != 0) { // File Null Check
+					if (!file.exists()) { 
+						file.getParentFile().mkdirs();
+						mFile.transferTo(new File(ARTICLE_IMAGE_REPO + "\\" + "temp" + "\\" + originalFileName)); // �ӽ÷�
+					}
+				}
+			} else {
+				fileList.add(null);
+			}
+
+		}
+		return fileList;
+	}
 	
 }

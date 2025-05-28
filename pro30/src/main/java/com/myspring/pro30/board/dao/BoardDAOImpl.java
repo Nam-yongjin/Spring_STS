@@ -17,12 +17,6 @@ public class BoardDAOImpl implements BoardDAO{
 	@Autowired
 	private SqlSession sqlSession;
 
-//	@Override
-//	public List selectAllArticlesList() throws DataAccessException {
-//		List<ArticleVO> articlesList = sqlSession.selectList("mapper.board.selectAllArticlesList");
-//		return articlesList;
-//	}
-
 	@Override
 	public int insertNewArticle(Map articleMap) throws DataAccessException {
 		int articleNO = selectNewArticleNO();
@@ -87,5 +81,44 @@ public class BoardDAOImpl implements BoardDAO{
 		return totArticles;
 	}
 
+	@Override
+	public void updateImageFile(Map articleMap)throws DataAccessException{
+		List<ImageVO> imageFileList = (ArrayList)articleMap.get("imageFileList");
+		int articleNO = Integer.parseInt((String)articleMap.get("articleNO"));
+		
+		for(int i = imageFileList.size()-1; i>=0; i--) {
+			ImageVO imageVO = imageFileList.get(i);
+			String imageFileName = imageVO.getImageFileName();
+			if(imageFileName == null) {
+				imageFileList.remove(i);
+			}else {
+				imageVO.setArticleNO(articleNO);
+			}
+		}
+		
+		if(imageFileList != null && imageFileList.size() != 0) {
+			sqlSession.update("mapper.board.updateImageFile", imageFileList);  // 수정한 이미지만 갱신한다
+		}
+	}
+	
+	@Override
+	public void insertModNewImage(Map articleMap)throws DataAccessException{
+		List<ImageVO> modAddimageFileList = (ArrayList<ImageVO>)articleMap.get("modAddimageFileList");
+		int articleNO = Integer.parseInt((String) articleMap.get("articleNO"));
 
+		int imageFileNO = selectNewImageFileNO();
+
+		for (ImageVO imageVO : modAddimageFileList) {
+			imageVO.setArticleNO(articleNO);
+			imageVO.setImageFileNO(++imageFileNO);
+		}
+
+		sqlSession.insert("mapper.board.insertModNewImage", modAddimageFileList);
+	}
+
+	@Override
+	public void deleteModImage(ImageVO imageVO) throws DataAccessException {
+		sqlSession.delete("mapper.board.deleteModImage", imageVO );
+		
+	}
 }
